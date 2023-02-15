@@ -15,6 +15,8 @@ const morgan = require("morgan");
 app.use(morgan(":method :url :status :res[content-length] - :response-time ms"));
 
 //routes
+const documentRouter = require("./routes/documentRoutes");
+app.use(documentRouter);
 
 //error handler
 const errorHandler = require("./middlewares/errorHandler");
