@@ -1,0 +1,20 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "app.js # App entry point\\n\r └─── configs # Configuration related stuff\r └─── controllers # Controllers for all the endpoints\r └─── helpers # Utility function\r └─── middlewares # store Middlewares\r └─── models # Object Models\r └─── public # Static file\r └─── routes # Routes for all the endpoints\r └─── services # Business logic\r └─── validations # store file for validation in controller",
+  "main": "app.js",
+  "scripts": {
+    "dev": "nodemon app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.20.1",
+    "express": "^4.18.2",
+    "fs": "^0.0.1-security",
+    "lodash": "^4.17.21",
+    "mongoose": "^6.9.1",
+    "multer": "^1.4.5-lts.1"
+  }
+}
