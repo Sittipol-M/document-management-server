@@ -31,3 +31,8 @@ exports.insertDocuments = async ({ documents }) => {
   const insertedDocuments = await Document.insertMany(documents);
   return insertedDocuments;
 };
+
+exports.getDocuments = async ({ names }) => {
+  const result = await Document.find({ name: { $in: names } });
+  return result;
+};
