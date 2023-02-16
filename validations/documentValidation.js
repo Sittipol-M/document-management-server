@@ -2,8 +2,10 @@ const { isEmptyArray } = require("../helpers/array");
 const { ValidationError } = require("../helpers/error");
 const { validateFields } = require("../helpers/validation");
 const CATEGORY = ["road", "bridge"];
+const _ = require("lodash");
+const { getDocuments } = require("../models/documentModel");
 
-const validateDocumentDescriptions = ({ documents, descriptions }) => {
+const validateLengthBody = ({ documents, descriptions }) => {
   const documentsLength = documents.length;
   const descriptionsLength = descriptions.length;
   if (documentsLength !== descriptionsLength) {
@@ -12,14 +14,17 @@ const validateDocumentDescriptions = ({ documents, descriptions }) => {
       errors: { documentsLength, descriptionsLength },
     });
   }
+};
+
+const validateDocumentNames = ({ documents, descriptions }) => {
   let notSameNames = [];
   for (let i = 0; i < documents.length; i++) {
     const { originalname: documentName } = documents[i];
-    const { file: fileName } = descriptions[i];
-    if (documentName !== fileName) notSameNames.push({ documentName, file: fileName });
+    const { name: descriptionName } = descriptions[i];
+    if (documentName !== descriptionName) notSameNames.push({ documentName, descriptionName });
     if (notSameNames.length > 0) {
       throw new ValidationError({
-        message: "The document's name is not the same as description's file.",
+        message: "The document's name is not the same as description's name.",
         errors: { notSameNames },
       });
     }
@@ -28,7 +33,7 @@ const validateDocumentDescriptions = ({ documents, descriptions }) => {
 
 const validateDescriptions = ({ descriptions }) => {
   const validationFields = {
-    file: { type: "string", isRequired: true },
+    name: { type: "string", isRequired: true },
     category: { type: "enum", isRequired: true, enums: CATEGORY },
     searchWords: { type: "array", isRequired: true, array: "string" },
   };
@@ -47,8 +52,19 @@ const validateDocuments = ({ documents }) => {
   if (notPdfFiles.length > 0) throw new ValidationError({ message: "Some `documents` is not pdf.", errors: { notPdfFiles } });
 };
 
-exports.validateBody = ({ documents, descriptions }) => {
-  validateDocumentDescriptions({ documents, descriptions });
+const validateExistedDocuments = async ({ documents }) => {
+  const names = documents.map((document) => document.originalname);
+  const existedDocuments = await getDocuments({ names });
+  const existedNames = existedDocuments.map((existedDocument) => existedDocument.name);
+  if (!isEmptyArray(existedDocuments)) {
+    throw new ValidationError({ message: "The documents were existed.", errors: { existedDocuments: existedNames } });
+  }
+};
+
+exports.validateUploadDocuments = async ({ documents, descriptions }) => {
+  validateLengthBody({ documents, descriptions });
   validateDocuments({ documents });
   validateDescriptions({ descriptions });
+  validateDocumentNames({ documents, descriptions });
+  await validateExistedDocuments({ documents });
 };

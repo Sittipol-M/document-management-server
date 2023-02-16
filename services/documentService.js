@@ -7,8 +7,8 @@ exports.saveDocumentsFiles = ({ documents, descriptions }) => {
 
   let descriptionsWithPath = [];
   for (const description of descriptions) {
-    const { file, category } = description;
-    const { originalname, buffer } = _.find(documents, { originalname: file });
+    const { name, category } = description;
+    const { originalname, buffer } = _.find(documents, { originalname: name });
     const folderPath = `${writePath}${category}`;
     const filePath = `${folderPath}/${originalname}`;
     if (!fs.existsSync(folderPath)) {
