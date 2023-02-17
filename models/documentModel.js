@@ -25,14 +25,13 @@ const documentSchema = new Schema({
 
 const Document = mongoose.model("Document", documentSchema);
 
-
-
 exports.insertDocuments = async ({ documents }) => {
   const insertedDocuments = await Document.insertMany(documents);
   return insertedDocuments;
 };
 
-exports.getDocuments = async ({ names }) => {
-  const result = await Document.find({ name: { $in: names } });
+exports.getDocuments = async ({ filter, select }) => {
+  const { names } = filter;
+  const result = await Document.find({ name: { $in: names } }).select(select.toString().split(","));
   return result;
 };
