@@ -1,5 +1,5 @@
 const fs = require("fs");
-const { ValidationError } = require("../helpers/error");
+const { ValidationError } = require("../errors/ValidationError");
 const _ = require("lodash");
 
 exports.saveDocumentsFiles = ({ documents, descriptions }) => {
