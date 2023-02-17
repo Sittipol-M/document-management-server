@@ -22,7 +22,4 @@ app.use(documentRouter);
 const errorHandler = require("./middlewares/errorHandler");
 app.use(errorHandler);
 
-const PORT = process.env.PORT;
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}`);
-});
+module.exports = app;
