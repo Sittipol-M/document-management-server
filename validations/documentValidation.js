@@ -1,16 +1,28 @@
 const { isEmptyArray } = require("../helpers/array");
-const { ValidationError } = require("../helpers/error");
-const { validateFields } = require("../helpers/validation");
-const CATEGORY = ["road", "bridge"];
+const { ValidationError } = require("../errors/ValidationError");
+const CATEGORY_ENUMS = ["road", "bridge"];
 const _ = require("lodash");
 const { getDocuments } = require("../models/documentModel");
+const { isInEnum } = require("../helpers/enum");
+
+const validateNotEmpty = ({ documents, descriptions }) => {
+  if (!documents || !descriptions) {
+    throw new ValidationError({ message: "`documents` and `descriptions` is required", errors: { documents, descriptions } });
+  }
+  if (!Array.isArray(documents) || !Array.isArray(descriptions)) {
+    throw new ValidationError({ message: "`documents` and `descriptions` must be an array", errors: { documents, descriptions } });
+  }
+  if (isEmptyArray(documents) || isEmptyArray(descriptions)) {
+    throw new ValidationError({ message: "`documents` and `descriptions` is required", errors: { documents, descriptions } });
+  }
+};
 
 const validateLengthBody = ({ documents, descriptions }) => {
   const documentsLength = documents.length;
   const descriptionsLength = descriptions.length;
   if (documentsLength !== descriptionsLength) {
     throw new ValidationError({
-      message: "The `documents` and `descriptions` must have same length.",
+      message: "`documents` and `descriptions` must have same length.",
       errors: { documentsLength, descriptionsLength },
     });
   }
@@ -32,19 +44,22 @@ const validateDocumentNames = ({ documents, descriptions }) => {
 };
 
 const validateDescriptions = ({ descriptions }) => {
-  const validationFields = {
-    name: { type: "string", isRequired: true },
-    category: { type: "enum", isRequired: true, enums: CATEGORY },
-    searchWords: { type: "array", isRequired: true, array: "string" },
-  };
-  if (!Array.isArray(descriptions)) throw new ValidationError({ message: "The `descriptions` must be array." });
-  if (isEmptyArray(descriptions)) throw new ValidationError({ message: "The `descriptions` required." });
-  validateFields({ validationFields, data: descriptions });
+  for (let description of descriptions) {
+    if (typeof description.name !== "string") throw new ValidationError({ message: "`description.name` must be string" });
+    if (typeof description.category !== "string") throw new ValidationError({ message: "`description.category` must be string" });
+    if (!isInEnum({ checkEnum: description.category, enums: CATEGORY_ENUMS }))
+      throw new ValidationError({ message: "`description.category` must contains [" + CATEGORY_ENUMS.toString() + "]" });
+    const searchWords = description.searchWords;
+    if (!Array.isArray(searchWords) || isEmptyArray(searchWords)) {
+      throw new ValidationError({ message: "`description.searchWords` must be array of string" });
+    }
+    for (const searchWord of searchWords) {
+      if (typeof searchWord !== "string") throw new ValidationError({ message: "`description.searchWords` must be array of string" });
+    }
+  }
 };
 
-const validateDocuments = ({ documents }) => {
-  if (!Array.isArray(documents)) throw new ValidationError({ message: "The `documents` should be array." });
-  if (isEmptyArray(documents)) throw new ValidationError({ message: "The `documents` required." });
+const validateMimeTypeDocuments = ({ documents }) => {
   let notPdfFiles = [];
   for (const { mimetype, originalname } of documents) {
     if (mimetype !== "application/pdf") notPdfFiles.push(originalname);
@@ -54,7 +69,7 @@ const validateDocuments = ({ documents }) => {
 
 const validateExistedDocuments = async ({ documents }) => {
   const names = documents.map((document) => document.originalname);
-  const existedDocuments = await getDocuments({ names });
+  const existedDocuments = await getDocuments({ filter: { names }, select: ["name"] });
   const existedNames = existedDocuments.map((existedDocument) => existedDocument.name);
   if (!isEmptyArray(existedDocuments)) {
     throw new ValidationError({ message: "The documents were existed.", errors: { existedDocuments: existedNames } });
@@ -62,8 +77,9 @@ const validateExistedDocuments = async ({ documents }) => {
 };
 
 exports.validateUploadDocuments = async ({ documents, descriptions }) => {
+  validateNotEmpty({ documents, descriptions });
   validateLengthBody({ documents, descriptions });
-  validateDocuments({ documents });
+  validateMimeTypeDocuments({ documents });
   validateDescriptions({ descriptions });
   validateDocumentNames({ documents, descriptions });
   await validateExistedDocuments({ documents });
