@@ -1,7 +1,7 @@
 const { tryCatchWrapper } = require("../helpers/tryCatchWrapper");
-const { insertDocuments } = require("../models/documentModel");
+const { insertDocuments, getDocumentsMongo } = require("../models/documentsModel");
 const { saveDocumentsFiles } = require("../services/documentService");
-const { validateUploadDocuments } = require("../validations/documentValidation");
+const { validateUploadDocuments, validateGetDocumentFilters } = require("../validations/documentValidation");
 
 exports.uploadDocuments = tryCatchWrapper(async (req, res) => {
   const documents = req.files;
@@ -10,4 +10,12 @@ exports.uploadDocuments = tryCatchWrapper(async (req, res) => {
   const descriptionsWithPath = saveDocumentsFiles({ documents, descriptions });
   await insertDocuments({ documents: descriptionsWithPath });
   res.send({ success: true, message: "Upload documents success." });
+});
+
+exports.getDocuments = tryCatchWrapper(async (req, res) => {
+  let { category, searchWords } = req.query;
+  validateGetDocumentFilters({ category, searchWords });
+  const select = ["category ", "searchWords", "name"];
+  const documents = await getDocumentsMongo({ filters: { category, searchWords }, select });
+  res.send({ success: true, documents });
 });
