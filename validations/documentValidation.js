@@ -2,8 +2,9 @@ const { isEmptyArray } = require("../helpers/array");
 const { ValidationError } = require("../errors/ValidationError");
 const CATEGORY_ENUMS = ["road", "bridge"];
 const _ = require("lodash");
-const { getDocuments } = require("../models/documentModel");
+const { getDocumentsMongo } = require("../models/documentsModel");
 const { isInEnum } = require("../helpers/enum");
+const { getEnums } = require("../models/enumsModel");
 
 const validateNotEmpty = ({ documents, descriptions }) => {
   if (!documents || !descriptions) {
@@ -43,7 +44,9 @@ const validateDocumentNames = ({ documents, descriptions }) => {
   }
 };
 
-const validateDescriptions = ({ descriptions }) => {
+const validateDescriptions = async ({ descriptions }) => {
+  const results = await getEnums({ key: ["categoryEnums"] });
+  const CATEGORY_ENUMS = results.find((result)=>(result.key === "categoryEnums")).enums;
   for (let description of descriptions) {
     if (typeof description.name !== "string") throw new ValidationError({ message: "`description.name` must be string" });
     if (typeof description.category !== "string") throw new ValidationError({ message: "`description.category` must be string" });
@@ -69,7 +72,7 @@ const validateMimeTypeDocuments = ({ documents }) => {
 
 const validateExistedDocuments = async ({ documents }) => {
   const names = documents.map((document) => document.originalname);
-  const existedDocuments = await getDocuments({ filter: { names }, select: ["name"] });
+  const existedDocuments = await getDocumentsMongo({ filters: { names }, select: ["name"] });
   const existedNames = existedDocuments.map((existedDocument) => existedDocument.name);
   if (!isEmptyArray(existedDocuments)) {
     throw new ValidationError({ message: "The documents were existed.", errors: { existedDocuments: existedNames } });
@@ -83,4 +86,15 @@ exports.validateUploadDocuments = async ({ documents, descriptions }) => {
   validateDescriptions({ descriptions });
   validateDocumentNames({ documents, descriptions });
   await validateExistedDocuments({ documents });
+};
+
+exports.validateGetDocumentFilters = ({ category, searchWords }) => {
+  if (category && !isInEnum({ checkEnum: category, enums: CATEGORY_ENUMS }))
+    throw new ValidationError({ message: "`category` must contains [" + CATEGORY_ENUMS.toString() + "]" });
+  if (searchWords) {
+    if (!Array.isArray(searchWords)) searchWords = [searchWords];
+    for (const searchWord of searchWords) {
+      if (typeof searchWord !== "string") throw new ValidationError({ message: "`searchWords` must be array of string" });
+    }
+  }
 };
