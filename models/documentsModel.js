@@ -30,8 +30,15 @@ exports.insertDocuments = async ({ documents }) => {
   return insertedDocuments;
 };
 
-exports.getDocuments = async ({ filter, select }) => {
-  const { names } = filter;
-  const result = await Document.find({ name: { $in: names } }).select(select.toString().split(","));
+exports.getDocumentsMongo = async ({ filters, select = [] }) => {
+  if (!Array.isArray(select)) throw new Error("getDocumentsMongo() -> `select` must be string array");
+  const { names, searchWords, category } = filters;
+  let selectFields = "";
+  let queryFilters = {};
+  names ? (queryFilters = { ...queryFilters, name: { $in: names } }) : null;
+  category ? (queryFilters = { ...queryFilters, category }) : null;
+  searchWords ? (queryFilters = { ...queryFilters, searchWords: { $all: searchWords } }) : null;
+  for (const eachSelect of select) selectFields = selectFields.concat(eachSelect + " ");
+  const result = await Document.find(queryFilters).select(selectFields);
   return result;
 };
