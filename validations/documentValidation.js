@@ -46,12 +46,13 @@ const validateDocumentNames = ({ documents, descriptions }) => {
 
 const validateDescriptions = async ({ descriptions }) => {
   const results = await getEnums({ key: ["categoryEnums"] });
-  const CATEGORY_ENUMS = results.find((result)=>(result.key === "categoryEnums")).enums;
+  const CATEGORY_ENUMS = results.find((result) => result.key === "categoryEnums").enums;
   for (let description of descriptions) {
     if (typeof description.name !== "string") throw new ValidationError({ message: "`description.name` must be string" });
     if (typeof description.category !== "string") throw new ValidationError({ message: "`description.category` must be string" });
-    if (!isInEnum({ checkEnum: description.category, enums: CATEGORY_ENUMS }))
+    if (!isInEnum({ checkEnum: description.category, enums: CATEGORY_ENUMS })) {
       throw new ValidationError({ message: "`description.category` must contains [" + CATEGORY_ENUMS.toString() + "]" });
+    }
     const searchWords = description.searchWords;
     if (!Array.isArray(searchWords) || isEmptyArray(searchWords)) {
       throw new ValidationError({ message: "`description.searchWords` must be array of string" });
@@ -83,7 +84,7 @@ exports.validateUploadDocuments = async ({ documents, descriptions }) => {
   validateNotEmpty({ documents, descriptions });
   validateLengthBody({ documents, descriptions });
   validateMimeTypeDocuments({ documents });
-  validateDescriptions({ descriptions });
+  await validateDescriptions({ descriptions });
   validateDocumentNames({ documents, descriptions });
   await validateExistedDocuments({ documents });
 };
