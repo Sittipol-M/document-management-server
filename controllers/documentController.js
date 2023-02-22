@@ -27,3 +27,9 @@ exports.getDocument = tryCatchWrapper(async (req, res) => {
   res.send({ success: true, document: fileWithBuffer });
 });
 
+exports.updateDocument = tryCatchWrapper(async (req, res) => {
+  const { _id, name, searchWords, category } = req.body;
+  await validateUpdateData({ _id, name, searchWords, category });
+  await updateDocumentData({ _id, name, searchWords, category });
+  res.send({ success: true });
+});
