@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
+const ObjectId = require("mongodb").ObjectId;
 
 const documentSchema = new Schema({
   name: {
@@ -41,4 +42,18 @@ exports.getDocumentsMongo = async ({ filters, select = [] }) => {
   for (const eachSelect of select) selectFields = selectFields.concat(eachSelect + " ");
   const result = await Document.find(queryFilters).select(selectFields);
   return result;
+};
+
+exports.getDocumentMongo = async ({ _id, name }) => {
+  let queryFilters = {};
+  name ? (queryFilters = { ...queryFilters, name }) : null;
+  _id ? (queryFilters = { ...queryFilters, _id: ObjectId(_id) }) : null;
+  const result = await Document.findOne(queryFilters).lean();
+  return result;
+};
+
+exports.updateDocumentMongo = async ({ _id, update }) => {
+  let queryFilters = {};
+  _id ? (queryFilters = { ...queryFilters, _id: ObjectId(_id) }) : null;
+  const result = await Document.updateOne(queryFilters, update);
 };
