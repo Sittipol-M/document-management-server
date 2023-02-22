@@ -1,7 +1,7 @@
 const { tryCatchWrapper } = require("../helpers/tryCatchWrapper");
-const { insertDocuments, getDocumentsMongo } = require("../models/documentsModel");
-const { saveDocumentsFiles } = require("../services/documentService");
-const { validateUploadDocuments, validateGetDocumentFilters } = require("../validations/documentValidation");
+const { insertDocuments, getDocumentsMongo, getDocumentMongo } = require("../models/documentsModel");
+const { saveDocumentsFiles, setBufferPdfToDocument, updateDocumentData } = require("../services/documentService");
+const { validateUploadDocuments, validateGetDocumentFilters, validateUpdateData, validateFileExisted } = require("../validations/documentValidation");
 
 exports.uploadDocuments = tryCatchWrapper(async (req, res) => {
   const documents = req.files;
@@ -19,6 +19,7 @@ exports.getDocuments = tryCatchWrapper(async (req, res) => {
   const documents = await getDocumentsMongo({ filters: { category, searchWords }, select });
   res.send({ success: true, documents });
 });
+
 exports.getDocument = tryCatchWrapper(async (req, res) => {
   const { documentName } = req.params;
   const document = await getDocumentMongo({ name: documentName });
