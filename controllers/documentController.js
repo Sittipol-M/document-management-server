@@ -19,3 +19,11 @@ exports.getDocuments = tryCatchWrapper(async (req, res) => {
   const documents = await getDocumentsMongo({ filters: { category, searchWords }, select });
   res.send({ success: true, documents });
 });
+exports.getDocument = tryCatchWrapper(async (req, res) => {
+  const { documentName } = req.params;
+  const document = await getDocumentMongo({ name: documentName });
+  validateFileExisted({ document });
+  const fileWithBuffer = setBufferPdfToDocument({ document });
+  res.send({ success: true, document: fileWithBuffer });
+});
+
