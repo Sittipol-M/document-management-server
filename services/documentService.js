@@ -19,3 +19,22 @@ exports.saveDocumentsFiles = ({ documents, descriptions }) => {
   }
   return descriptionsWithPath || [];
 };
+
+exports.setBufferPdfToDocument = ({ document }) => {
+  const pdfFile = fs.readFileSync(document.path);
+  document = { ...document, buffer: pdfFile };
+  return document;
+};
+
+const changeCategoryFile = ({ name, prevPath, category }) => {
+  const prevPathFile = fs.readFileSync(prevPath);
+  const writePath = process.env.DEFAULT_SAVE_PATH;
+  const folderPath = `${writePath}${category}`;
+  const newFilePath = `${folderPath}/${name}`;
+  if (!fs.existsSync(folderPath)) {
+    fs.mkdirSync(folderPath);
+  }
+  fs.writeFileSync(newFilePath, prevPathFile);
+  fs.unlinkSync(prevPath);
+  return newFilePath;
+};
