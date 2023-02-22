@@ -1,6 +1,8 @@
 const fs = require("fs");
 const { ValidationError } = require("../errors/ValidationError");
 const _ = require("lodash");
+const { getDocument } = require("../controllers/documentController");
+const { getDocumentMongo, updateDocumentMongo } = require("../models/documentsModel");
 
 exports.saveDocumentsFiles = ({ documents, descriptions }) => {
   const writePath = process.env.DEFAULT_SAVE_PATH;
@@ -37,4 +39,13 @@ const changeCategoryFile = ({ name, prevPath, category }) => {
   fs.writeFileSync(newFilePath, prevPathFile);
   fs.unlinkSync(prevPath);
   return newFilePath;
+};
+
+exports.updateDocumentData = async ({ _id, name, searchWords, category }) => {
+  const prevDocument = await getDocumentMongo({ _id });
+  let { category: prevCategory, path: prevPath } = prevDocument;
+  let newPath;
+  if (category !== prevCategory) newPath = changeCategoryFile({ name, prevPath, category });
+  const newDocument = { name, searchWords, category, path: newPath ? newPath : prevPath };
+  updateDocumentMongo({ _id, update: newDocument });
 };
