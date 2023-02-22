@@ -99,3 +99,24 @@ exports.validateGetDocumentFilters = ({ category, searchWords }) => {
     }
   }
 };
+
+exports.validateFileExisted = ({ document }) => {
+  if (!document || !fs.existsSync(document.path)) throw new ValidationError({ message: "file not found" });
+};
+
+exports.validateUpdateData = async ({ _id, name, searchWords, category }) => {
+  const results = await getEnums({ key: ["categoryEnums"] });
+  const CATEGORY_ENUMS = results.find((result) => result.key === "categoryEnums").enums;
+  if (!_id || !name || !searchWords || !category) throw new ValidationError({ message: "`_id`, `name`, `searchWords` and `category` is required" });
+  if (typeof name !== "string") throw new ValidationError({ message: "`name` must be string" });
+  if (typeof category !== "string") throw new ValidationError({ message: "`category` must be string" });
+  if (!isInEnum({ checkEnum: category, enums: CATEGORY_ENUMS })) {
+    throw new ValidationError({ message: "`category` must contains [" + CATEGORY_ENUMS.toString() + "]" });
+  }
+  if (!Array.isArray(searchWords) || isEmptyArray(searchWords)) {
+    throw new ValidationError({ message: "`searchWords` must be array of string" });
+  }
+  for (const searchWord of searchWords) {
+    if (typeof searchWord !== "string") throw new ValidationError({ message: "`searchWords` must be array of string" });
+  }
+};
