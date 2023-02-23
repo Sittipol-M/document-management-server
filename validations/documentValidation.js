@@ -5,6 +5,7 @@ const _ = require("lodash");
 const { getDocumentsMongo } = require("../models/documentsModel");
 const { isInEnum } = require("../helpers/enum");
 const { getEnums } = require("../models/enumsModel");
+const fs = require("fs");
 
 const validateNotEmpty = ({ documents, descriptions }) => {
   if (!documents || !descriptions) {
