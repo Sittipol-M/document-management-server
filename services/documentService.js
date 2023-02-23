@@ -22,10 +22,10 @@ exports.saveDocumentsFiles = ({ documents, descriptions }) => {
   return descriptionsWithPath || [];
 };
 
-exports.setBufferPdfToDocument = ({ document }) => {
-  const pdfFile = fs.readFileSync(document.path);
-  document = { ...document, buffer: pdfFile };
-  return document;
+exports.getPdfFile = ({ document }) => {
+  const stat = fs.statSync(document.path);
+  const buffer = fs.readFileSync(document.path);
+  return { buffer, stat };
 };
 
 const changeCategoryFile = ({ name, prevPath, category }) => {
