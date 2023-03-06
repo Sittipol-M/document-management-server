@@ -1,0 +1,9 @@
+{
+  "apps": [
+    {
+      "name": "document-management-server",
+      "scripts": "npm",
+      "args": "production"
+    }
+  ]
+}
