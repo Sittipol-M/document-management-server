@@ -3,6 +3,7 @@ const { ValidationError } = require("../errors/ValidationError");
 const _ = require("lodash");
 const { getDocument } = require("../controllers/documentController");
 const { getDocumentMongo, updateDocumentMongo } = require("../models/documentsModel");
+const { calculatePercent } = require("../helpers/number");
 
 exports.saveDocumentsFiles = ({ documents, descriptions }) => {
   const writePath = process.env.DEFAULT_SAVE_PATH;
@@ -42,10 +43,24 @@ const changeCategoryFile = ({ name, prevPath, category }) => {
 };
 
 exports.updateDocumentData = async ({ _id, name, searchWords, category }) => {
-  const prevDocument = await getDocumentMongo({ _id });
+  const prevDocument = await getDocumentMongo({ filters: { _id } });
   let { category: prevCategory, path: prevPath } = prevDocument;
   let newPath;
   if (category !== prevCategory) newPath = changeCategoryFile({ name, prevPath, category });
   const newDocument = { name, searchWords, category, path: newPath ? newPath : prevPath };
-  updateDocumentMongo({ _id, update: newDocument });
+  updateDocumentMongo({ filters: { _id }, update: newDocument });
+};
+
+exports.deleteFileFromDirectory = ({ name, path }) => {
+  fs.unlinkSync(path);
+};
+
+exports.countCategoriesToRatio = ({ countCategories }) => {
+  let countAll = 0;
+  countCategories.map(({ count }) => (countAll += count));
+  countCategories = countCategories.map((countCategory) => ({
+    ...countCategory,
+    percent: Number(calculatePercent({ partialValue: countCategory.count, totalValue: countAll }).toFixed(2)),
+  }));
+  return countCategories;
 };

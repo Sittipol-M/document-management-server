@@ -1,10 +1,10 @@
 const { isEmptyArray } = require("../helpers/array");
 const { ValidationError } = require("../errors/ValidationError");
-const CATEGORY_ENUMS = ["road", "bridge"];
 const _ = require("lodash");
 const { getDocumentsMongo } = require("../models/documentsModel");
 const { isInEnum } = require("../helpers/enum");
-const { getEnums } = require("../models/enumsModel");
+const { getEnumsMongo } = require("../models/enumsModel");
+const moment = require("moment");
 const fs = require("fs");
 
 const validateNotEmpty = ({ documents, descriptions }) => {
@@ -46,7 +46,7 @@ const validateDocumentNames = ({ documents, descriptions }) => {
 };
 
 const validateDescriptions = async ({ descriptions }) => {
-  const results = await getEnums({ key: ["categoryEnums"] });
+  const results = await getEnumsMongo({ key: ["categoryEnums"] });
   const CATEGORY_ENUMS = results.find((result) => result.key === "categoryEnums").enums;
   for (let description of descriptions) {
     if (typeof description.name !== "string") throw new ValidationError({ message: "`description.name` must be string" });
@@ -54,13 +54,7 @@ const validateDescriptions = async ({ descriptions }) => {
     if (!isInEnum({ checkEnum: description.category, enums: CATEGORY_ENUMS })) {
       throw new ValidationError({ message: "`description.category` must contains [" + CATEGORY_ENUMS.toString() + "]" });
     }
-    const searchWords = description.searchWords;
-    if (!Array.isArray(searchWords) || isEmptyArray(searchWords)) {
-      throw new ValidationError({ message: "`description.searchWords` must be array of string" });
-    }
-    for (const searchWord of searchWords) {
-      if (typeof searchWord !== "string") throw new ValidationError({ message: "`description.searchWords` must be array of string" });
-    }
+    if (typeof description.searchWords !== "string") throw new ValidationError({ message: "`description.searchWords` must be type of string" });
   }
 };
 
@@ -69,7 +63,7 @@ const validateMimeTypeDocuments = ({ documents }) => {
   for (const { mimetype, originalname } of documents) {
     if (mimetype !== "application/pdf") notPdfFiles.push(originalname);
   }
-  if (notPdfFiles.length > 0) throw new ValidationError({ message: "Some `documents` is not pdf.", errors: { notPdfFiles } });
+  if (notPdfFiles.length > 0) throw new ValidationError({ message: "Some `documents` is not pdf", errors: { notPdfFiles } });
 };
 
 const validateExistedDocuments = async ({ documents }) => {
@@ -77,7 +71,7 @@ const validateExistedDocuments = async ({ documents }) => {
   const existedDocuments = await getDocumentsMongo({ filters: { names }, select: ["name"] });
   const existedNames = existedDocuments.map((existedDocument) => existedDocument.name);
   if (!isEmptyArray(existedDocuments)) {
-    throw new ValidationError({ message: "The documents were existed.", errors: { existedDocuments: existedNames } });
+    throw new ValidationError({ message: "The documents were existed", errors: { existedDocuments: existedNames } });
   }
 };
 
@@ -90,15 +84,16 @@ exports.validateUploadDocuments = async ({ documents, descriptions }) => {
   await validateExistedDocuments({ documents });
 };
 
-exports.validateGetDocumentFilters = ({ category, searchWords }) => {
+exports.validateGetDocumentFilters = async ({ category, searchWords, page, pageSize }) => {
+  const results = await getEnumsMongo({ key: ["categoryEnums"] });
+  const CATEGORY_ENUMS = results.find((result) => result.key === "categoryEnums").enums;
+  if (page && isNaN(page)) throw new ValidationError({ message: "`page` must be type of number" });
+  if (pageSize && isNaN(pageSize)) throw new ValidationError({ message: "`pageSize` must be type of number" });
+  if (page && !pageSize) throw new ValidationError({ message: "`pageSize` is required" });
+  if (!page && pageSize) throw new ValidationError({ message: "`page` is required" });
   if (category && !isInEnum({ checkEnum: category, enums: CATEGORY_ENUMS }))
     throw new ValidationError({ message: "`category` must contains [" + CATEGORY_ENUMS.toString() + "]" });
-  if (searchWords) {
-    if (!Array.isArray(searchWords)) searchWords = [searchWords];
-    for (const searchWord of searchWords) {
-      if (typeof searchWord !== "string") throw new ValidationError({ message: "`searchWords` must be array of string" });
-    }
-  }
+  if (searchWords && typeof searchWords !== "string") throw new ValidationError({ message: "`searchWords` must be type of string" });
 };
 
 exports.validateFileExisted = ({ document }) => {
@@ -106,7 +101,7 @@ exports.validateFileExisted = ({ document }) => {
 };
 
 exports.validateUpdateData = async ({ _id, name, searchWords, category }) => {
-  const results = await getEnums({ key: ["categoryEnums"] });
+  const results = await getEnumsMongo({ key: ["categoryEnums"] });
   const CATEGORY_ENUMS = results.find((result) => result.key === "categoryEnums").enums;
   if (!_id || !name || !searchWords || !category) throw new ValidationError({ message: "`_id`, `name`, `searchWords` and `category` is required" });
   if (typeof name !== "string") throw new ValidationError({ message: "`name` must be string" });
@@ -114,10 +109,21 @@ exports.validateUpdateData = async ({ _id, name, searchWords, category }) => {
   if (!isInEnum({ checkEnum: category, enums: CATEGORY_ENUMS })) {
     throw new ValidationError({ message: "`category` must contains [" + CATEGORY_ENUMS.toString() + "]" });
   }
-  if (!Array.isArray(searchWords) || isEmptyArray(searchWords)) {
-    throw new ValidationError({ message: "`searchWords` must be array of string" });
-  }
-  for (const searchWord of searchWords) {
-    if (typeof searchWord !== "string") throw new ValidationError({ message: "`searchWords` must be array of string" });
+  if (typeof searchWords !== "string") throw new ValidationError({ message: "`searchWords` must be type of string" });
+};
+
+exports.validateRecentDocumentDownload = ({ numberOfRecent }) => {
+  if (!numberOfRecent) throw new ValidationError({ message: "`numberOfRecent` is required" });
+  if (numberOfRecent && isNaN(numberOfRecent)) throw new ValidationError({ message: "`numberOfRecent` must be type of number" });
+};
+
+exports.validateRecentDocumentUpload = ({ numberOfRecent }) => {
+  if (!numberOfRecent) throw new ValidationError({ message: "`numberOfRecent` is required" });
+  if (numberOfRecent && isNaN(numberOfRecent)) throw new ValidationError({ message: "`numberOfRecent` must be type of number" });
+};
+
+exports.validateDate = ({ date }) => {
+  if (!moment(date).isValid()) {
+    throw new ValidationError({ message: "`date` is not valid type of date" });
   }
 };
