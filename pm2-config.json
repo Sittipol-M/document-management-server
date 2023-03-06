@@ -2,8 +2,8 @@
   "apps": [
     {
       "name": "document-management-server",
-      "scripts": "npm",
-      "args": "production"
+      "scripts": "node",
+      "args": "start:production"
     }
   ]
 }

@@ -4,8 +4,8 @@
   "description": "app.js # App entry point\\n\r └─── configs # Configuration related stuff\r └─── controllers # Controllers for all the endpoints\r └─── helpers # Utility function\r └─── middlewares # store Middlewares\r └─── models # Object Models\r └─── public # Static file\r └─── routes # Routes for all the endpoints\r └─── services # Business logic\r └─── validations # store file for validation in controller",
   "main": "app.js",
   "scripts": {
-    "dev": "nodemon server.js",
-    "production": "node server.js",
+    "start:dev": "nodemon server.js",
+    "start:production": "node server.js",
     "test": "jest"
   },
   "author": "",
