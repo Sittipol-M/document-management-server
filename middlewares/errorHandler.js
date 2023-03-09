@@ -1,6 +1,5 @@
 const errorHandler = (error, req, res, next) => {
   const { message, status } = error;
-  console.error(error);
   let response = { success: false, message };
   switch (error.constructor.name) {
     case "ValidationError":
