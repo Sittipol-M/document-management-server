@@ -32,10 +32,8 @@ exports.insertDocuments = async ({ documents }) => {
   return insertedDocuments;
 };
 
-exports.getDocumentsMongo = async ({ filters, select = [], skip, limit, sort }) => {
-  if (!Array.isArray(select)) throw new Error("getDocumentsMongo() -> `select` must be string array");
+exports.getDocumentsMongo = async ({ filters, select, skip, limit, sort }) => {
   let { names, searchWords, category } = filters;
-  let selectFields = "";
   let queryFilters = {};
   names ? (queryFilters = { ...queryFilters, name: { $in: names } }) : null;
   category ? (queryFilters = { ...queryFilters, category }) : null;
@@ -48,9 +46,7 @@ exports.getDocumentsMongo = async ({ filters, select = [], skip, limit, sort }) 
       });
     queryFilters = { ...queryFilters, $and: querySearchWords };
   }
-  for (const eachSelect of select) selectFields = selectFields.concat(eachSelect + " ");
-  const result = await Document.find(queryFilters).select(selectFields).skip(skip).limit(limit).sort(sort);
-  return result;
+  return await Document.find(queryFilters).select(select).skip(skip).limit(limit).sort(sort);
 };
 
 exports.getDocumentMongo = async ({ filters, select = [] }) => {
@@ -74,12 +70,11 @@ exports.deleteDocumentMongo = async ({ name }) => {
 };
 
 exports.getCountCategoriesMongo = async () => {
-  const result = await Document.aggregate([
+  return await Document.aggregate([
     { $group: { _id: "$category", count: { $sum: 1 } } },
     { $addFields: { category: "$_id" } },
     { $project: { _id: 0 } },
   ]);
-  return result;
 };
 
 exports.getDocumentsUploadLogMongo = async ({ limit, sort }) => {

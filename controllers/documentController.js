@@ -40,9 +40,13 @@ exports.uploadDocuments = tryCatchWrapper(async (req, res) => {
 exports.getDocuments = tryCatchWrapper(async (req, res) => {
   let { category, searchWords, page, pageSize } = req.query;
   await validateGetDocumentFilters({ category, searchWords, page, pageSize });
-  const select = ["category ", "searchWords", "name"];
-  const skip = (page - 1) * pageSize;
-  const documents = await getDocumentsMongo({ filters: { category, searchWords }, select, skip, limit: pageSize, sort: "name" });
+  const documents = await getDocumentsMongo({
+    filters: { category, searchWords },
+    select: { category: 1, searchWords: 1, name: 1, _id: 0 },
+    skip: (page - 1) * pageSize,
+    limit: pageSize,
+    sort: { name: 1 },
+  });
   res.send({ success: true, length: documents.length, documents });
 });
 
